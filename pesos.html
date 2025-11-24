@@ -1,0 +1,189 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Calculadora de Tarifas</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    
+    <style>
+        /* --- ESTILOS CORPORATIVOS --- */
+        :root {
+            --brand-blue: #000044;    /* Azul oscuro serio */
+            --brand-yellow: #FFD700;  /* Amarillo tipo Correos */
+            --bg-gray: #f5f5f5;
+        }
+
+        body {
+            background-color: var(--bg-gray);
+            font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;
+        }
+
+        /* Tarjeta principal */
+        .shipping-card {
+            border: 1px solid #ddd;
+            border-radius: 8px; /* Bordes ligeramente redondeados, no mucho */
+            background: white;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.05);
+            overflow: hidden;
+        }
+
+        .card-header-corp {
+            background-color: var(--brand-blue);
+            color: white;
+            padding: 15px 20px;
+            font-weight: 600;
+            font-size: 1.1rem;
+            border-bottom: 4px solid var(--brand-yellow);
+        }
+
+        /* Estilo de la lista de tarifas */
+        .list-group-item {
+            border-left: 5px solid transparent; /* Para el efecto de selección */
+            transition: all 0.2s;
+            font-size: 0.95rem;
+            color: #555;
+        }
+
+        /* Cuando una tarifa está activa */
+        .list-group-item.active-rate {
+            background-color: #fcfcfc;
+            border-left-color: var(--brand-blue);
+            color: var(--brand-blue);
+            font-weight: bold;
+        }
+
+        /* Caja de Resultado Final */
+        .price-result-box {
+            background-color: var(--brand-yellow);
+            color: var(--brand-blue);
+            padding: 20px;
+            text-align: center;
+            border-radius: 4px;
+            margin-top: 20px;
+        }
+        
+        .price-label {
+            text-transform: uppercase;
+            font-size: 0.8rem;
+            letter-spacing: 1px;
+            font-weight: 700;
+        }
+
+        .price-value {
+            font-size: 2rem;
+            font-weight: 800;
+            line-height: 1;
+        }
+    </style>
+</head>
+<body>
+
+<div class="container mt-5">
+    <div class="row justify-content-center">
+        <div class="col-md-6">
+            
+            <div class="shipping-card">
+                <div class="card-header-corp">
+                    Cálculo de Tarifas por Peso
+                </div>
+
+                <div class="p-4">
+                    <div class="mb-4">
+                        <label for="peso" class="form-label fw-bold text-secondary">Introduzca el peso del paquete</label>
+                        <div class="input-group">
+                            <input type="number" id="peso" class="form-control form-control-lg" placeholder="0" min="0" step="0.1">
+                            <span class="input-group-text">kg</span>
+                        </div>
+                    </div>
+
+                    <label class="small text-muted mb-2 text-uppercase fw-bold">Tabla de recargos</label>
+                    <ul class="list-group mb-3">
+                        <li class="list-group-item d-flex justify-content-between align-items-center" id="rate-row-1">
+                            <span>Paquetería Estándar <small class="text-muted d-block fw-normal">Menos de 10 kg</small></span>
+                            <span class="badge bg-secondary rounded-pill">Sin recargo</span>
+                        </li>
+                        <li class="list-group-item d-flex justify-content-between align-items-center" id="rate-row-2">
+                            <span>Paquetería Plus <small class="text-muted d-block fw-normal">Entre 10 y 20 kg</small></span>
+                            <span class="badge bg-light text-dark border">Recargo +50%</span>
+                        </li>
+                        <li class="list-group-item d-flex justify-content-between align-items-center" id="rate-row-3">
+                            <span>Gran Volumen <small class="text-muted d-block fw-normal">Más de 20 kg</small></span>
+                            <span class="badge bg-dark">Doble Tarifa</span>
+                        </li>
+                    </ul>
+
+                    <div class="d-grid gap-2">
+                        <button onclick="calcularPrecio()" class="btn btn-dark py-2">Actualizar Precio</button>
+                    </div>
+
+                    <div class="price-result-box" id="result-box" style="display: none;">
+                        <div class="price-label">Coste Total Estimado</div>
+                        <div class="price-value" id="final-price">0.00 €</div>
+                        <small id="rate-info" class="mt-2 d-block text-dark">Tarifa base aplicada</small>
+                    </div>
+
+                </div>
+            </div>
+
+        </div>
+    </div>
+</div>
+
+<script>
+    function calcularPrecio() {
+        // 1. OBTENER DATOS
+        const inputPeso = document.getElementById('peso').value;
+        const peso = parseFloat(inputPeso);
+        
+        // Elementos del DOM para manipular
+        const row1 = document.getElementById('rate-row-1');
+        const row2 = document.getElementById('rate-row-2');
+        const row3 = document.getElementById('rate-row-3');
+        const resultBox = document.getElementById('result-box');
+        const priceDisplay = document.getElementById('final-price');
+        const infoDisplay = document.getElementById('rate-info');
+
+        // Limpiar estilos anteriores (quitar la clase 'active-rate')
+        [row1, row2, row3].forEach(row => row.classList.remove('active-rate'));
+
+        // Validación simple
+        if (isNaN(peso) || peso <= 0) {
+            alert("Por favor, introduzca un peso válido.");
+            resultBox.style.display = "none";
+            return;
+        }
+
+        // 2. LÓGICA DE NEGOCIO (Según enunciado)
+        // NOTA: Usamos 10€ como precio base simulado. 
+        // Cuando juntes código con tus compañeros, esto vendrá de las ciudades.
+        let precioBase = 10; 
+        let precioFinal = 0;
+
+        if (peso < 10) {
+            // Caso 1: < 10kg
+            precioFinal = precioBase; 
+            row1.classList.add('active-rate'); // Iluminamos la fila 1
+            infoDisplay.textContent = "Tarifa Estándar aplicada";
+        } 
+        else if (peso >= 10 && peso < 20) {
+            // Caso 2: 10-20kg (x1.5)
+            precioFinal = precioBase * 1.5;
+            row2.classList.add('active-rate'); // Iluminamos la fila 2
+            infoDisplay.textContent = "Tarifa Plus aplicada (x1.5)";
+        } 
+        else {
+            // Caso 3: >= 20kg (x2)
+            precioFinal = precioBase * 2;
+            row3.classList.add('active-rate'); // Iluminamos la fila 3
+            infoDisplay.textContent = "Tarifa Gran Volumen aplicada (x2)";
+        }
+
+        // 3. MOSTRAR RESULTADO
+        priceDisplay.textContent = precioFinal.toFixed(2) + " €";
+        resultBox.style.display = "block";
+    }
+</script>
+
+</body>
+</html>
