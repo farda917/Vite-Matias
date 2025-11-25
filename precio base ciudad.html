@@ -29,42 +29,46 @@
 </div>
 
 <script>
+  const ciudades = ["Madrid", "Barcelona", "Valencia", "Sevilla", "Bilbao", "Palma", "Granada"];
+
+  // Función para autocompletar con Tab
+  function autocompletar(input, e) {
+      if (e.key === "Tab") {
+          e.preventDefault(); // evitar que se vaya al siguiente input
+          const valor = input.value.toLowerCase();
+          const coincidencia = ciudades.find(c => c.toLowerCase().startsWith(valor));
+          if (coincidencia) {
+              input.value = coincidencia;
+          }
+      }
+  }
+
+  // Asignar evento keydown a los inputs de ciudad
+  document.getElementById("origen").addEventListener("keydown", e => autocompletar(e.target, e));
+  document.getElementById("destino").addEventListener("keydown", e => autocompletar(e.target, e));
+
   // Función para calcular precio base según ciudad
   function calcularPrecioBase(origen, destino) {
       origen = origen.toLowerCase();
       destino = destino.toLowerCase();
-
-      if (origen === destino) {
-          return 5; // misma ciudad
-      } else if (origen === "palma" || destino === "palma") {
-          return 9; // una ciudad es Palma
-      } else {
-          return 7; // ciudades distintas, ninguna es Palma
-      }
+      if (origen === destino) return 5;
+      else if (origen === "palma" || destino === "palma") return 9;
+      else return 7;
   }
 
-  // Función para aplicar modificador según peso
   function aplicarModificador(precioBase, peso) {
-      if (peso < 10) {
-          return precioBase;
-      } else if (peso <= 20) {
-          return precioBase * 1.5;
-      } else {
-          return precioBase * 2;
-      }
+      if (peso < 10) return precioBase;
+      else if (peso <= 20) return precioBase * 1.5;
+      else return precioBase * 2;
   }
 
-  // Función principal para calcular precio final
   function calcularEnvio(origen, destino, peso) {
       const base = calcularPrecioBase(origen, destino);
-      const precioFinal = aplicarModificador(base, peso);
-      return precioFinal.toFixed(2); // redondear a 2 decimales
+      return aplicarModificador(base, peso).toFixed(2);
   }
 
-  // Evento submit del formulario
   document.getElementById("form-envio").addEventListener("submit", function(e){
-      e.preventDefault(); // evitar recarga de página
-
+      e.preventDefault();
       const origen = document.getElementById("origen").value;
       const destino = document.getElementById("destino").value;
       const peso = parseFloat(document.getElementById("peso").value);
