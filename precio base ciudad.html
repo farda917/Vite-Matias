@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Calculadora de Envíos</title>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css">
+</head>
+<body>
+<div class="container mt-5">
+  <h2>Calculadora de Envíos</h2>
+  <form id="form-envio">
+    <div class="mb-3">
+      <label for="origen" class="form-label">Ciudad de origen:</label>
+      <input type="text" id="origen" class="form-control" placeholder="Ej: Madrid" required>
+    </div>
+    <div class="mb-3">
+      <label for="destino" class="form-label">Ciudad de destino:</label>
+      <input type="text" id="destino" class="form-control" placeholder="Ej: Palma" required>
+    </div>
+    <div class="mb-3">
+      <label for="peso" class="form-label">Peso del paquete (kg):</label>
+      <input type="number" id="peso" class="form-control" placeholder="Ej: 12" required min="0.1" step="0.1">
+    </div>
+    <button type="submit" class="btn btn-primary">Calcular precio</button>
+  </form>
+
+  <p id="resultado" class="mt-3 fs-5"></p>
+</div>
+
+<script>
+  // Función para calcular precio base según ciudad
+  function calcularPrecioBase(origen, destino) {
+      origen = origen.toLowerCase();
+      destino = destino.toLowerCase();
+
+      if (origen === destino) {
+          return 5; // misma ciudad
+      } else if (origen === "palma" || destino === "palma") {
+          return 9; // una ciudad es Palma
+      } else {
+          return 7; // ciudades distintas, ninguna es Palma
+      }
+  }
+
+  // Función para aplicar modificador según peso
+  function aplicarModificador(precioBase, peso) {
+      if (peso < 10) {
+          return precioBase;
+      } else if (peso <= 20) {
+          return precioBase * 1.5;
+      } else {
+          return precioBase * 2;
+      }
+  }
+
+  // Función principal para calcular precio final
+  function calcularEnvio(origen, destino, peso) {
+      const base = calcularPrecioBase(origen, destino);
+      const precioFinal = aplicarModificador(base, peso);
+      return precioFinal.toFixed(2); // redondear a 2 decimales
+  }
+
+  // Evento submit del formulario
+  document.getElementById("form-envio").addEventListener("submit", function(e){
+      e.preventDefault(); // evitar recarga de página
+
+      const origen = document.getElementById("origen").value;
+      const destino = document.getElementById("destino").value;
+      const peso = parseFloat(document.getElementById("peso").value);
+
+      if (!origen || !destino || isNaN(peso) || peso <= 0) {
+          alert("Por favor completa todos los campos correctamente.");
+          return;
+      }
+
+      const precio = calcularEnvio(origen, destino, peso);
+      document.getElementById("resultado").innerText = "Precio final: €" + precio;
+  });
+</script>
+</body>
+</html>
