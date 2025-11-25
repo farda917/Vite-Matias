@@ -1,13 +1,47 @@
-<!doctype html>
-<html lang="en">
-  <head>
-    <meta charset="UTF-8" />
-    <link rel="icon" type="image/svg+xml" href="/vite.svg" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>vite-project</title>
-  </head>
-  <body>
-    <div id="app"></div>
-    <script type="module" src="/src/main.js"></script>
-  </body>
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <title>Validador de DNI</title>
+</head>
+<body>
+    <h2>Validador de DNI Español</h2>
+    <input type="text" id="dniInput" placeholder="Introduce el DNI (8 dígitos + letra)" maxlength="9">
+    <button onclick="comprobarDNI()">Validar</button>
+    <p id="resultado"></p>
+
+    <script>
+        // PEGA AQUÍ LA FUNCIÓN validarDNI DEL PUNTO 1.
+        function validarDNI(dni) {
+            const letrasDNI = "TRWAGMYFPDXBNJZSQVHLCKE";
+            const regex = /^(\d{8})([A-Z])$/i;
+            const match = dni.toUpperCase().match(regex);
+
+            if (!match) {
+                return false;
+            }
+
+            const numero = parseInt(match[1], 10);
+            const letraIngresada = match[2];
+            const resto = numero % 23;
+            const letraCorrecta = letrasDNI.charAt(resto);
+
+            return letraIngresada === letraCorrecta;
+        }
+
+        // Función para manejar la interacción con el DOM
+        function comprobarDNI() {
+            const dni = document.getElementById('dniInput').value.trim();
+            const resultadoElement = document.getElementById('resultado');
+
+            if (validarDNI(dni)) {
+                resultadoElement.textContent = `✅ El DNI ${dni} es VÁLIDO.`;
+                resultadoElement.style.color = 'green';
+            } else {
+                resultadoElement.textContent = `❌ El DNI ${dni} es INVÁLIDO o el formato es incorrecto.`;
+                resultadoElement.style.color = 'red';
+            }
+        }
+    </script>
+</body>
 </html>
