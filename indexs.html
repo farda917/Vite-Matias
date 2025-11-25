@@ -1,0 +1,329 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Gestión Logística: Tarifas y Documentación</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    
+    <style>
+        /* --- ESTILOS CORPORATIVOS --- */
+        :root {
+            --brand-blue: #000044;    /* Azul oscuro serio */
+            --brand-yellow: #FFD700;  /* Amarillo tipo Correos */
+            --bg-gray: #f5f5f5;
+        }
+
+        body {
+            background-color: var(--bg-gray);
+            font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;
+            padding-bottom: 50px;
+        }
+
+        /* Estilo Tarjetas */
+        .corp-card {
+            border: 1px solid #ddd;
+            border-radius: 8px; 
+            background: white;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.05);
+            overflow: hidden;
+            height: 100%;
+        }
+
+        .card-header-corp {
+            background-color: var(--brand-blue);
+            color: white;
+            padding: 15px 20px;
+            font-weight: 600;
+            font-size: 1.1rem;
+            border-bottom: 4px solid var(--brand-yellow);
+        }
+
+        /* Estilo Lista Tarifas */
+        .list-group-item {
+            border-left: 5px solid transparent;
+            transition: all 0.2s;
+            font-size: 0.95rem;
+            color: #555;
+        }
+
+        .list-group-item.active-rate {
+            background-color: #fcfcfc;
+            border-left-color: var(--brand-blue);
+            color: var(--brand-blue);
+            font-weight: bold;
+        }
+
+        /* Cajas de Resultado */
+        .result-box {
+            padding: 20px;
+            text-align: center;
+            border-radius: 4px;
+            margin-top: 20px;
+            display: none;
+        }
+
+        .result-box.price {
+            background-color: var(--brand-yellow);
+            color: var(--brand-blue);
+        }
+
+        .result-box.dni-valid {
+            background-color: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+
+        .result-box.dni-invalid {
+            background-color: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+        
+        .price-label { text-transform: uppercase; font-size: 0.8rem; letter-spacing: 1px; font-weight: 700; }
+        .price-value { font-size: 2rem; font-weight: 800; line-height: 1; }
+        
+        .section-title { font-size: 0.9rem; font-weight: 700; color: #888; text-transform: uppercase; margin-bottom: 10px; display: block; }
+    </style>
+</head>
+<body>
+
+<div class="container mt-5">
+    <div class="row g-4">
+        
+        <div class="col-md-6">
+            <div class="corp-card">
+                <div class="card-header-corp">
+                    📦 Calculadora de Envíos
+                </div>
+
+                <div class="p-4">
+                    <span class="section-title">1. Ruta de Envío</span>
+                    <div class="row mb-3">
+                        <div class="col-6">
+                            <label for="origen" class="form-label small">Origen</label>
+                            <input type="text" id="origen" class="form-control" placeholder="Ej: Madrid">
+                        </div>
+                        <div class="col-6">
+                            <label for="destino" class="form-label small">Destino</label>
+                            <input type="text" id="destino" class="form-control" placeholder="Ej: Palma">
+                        </div>
+                    </div>
+
+                    <span class="section-title">2. Detalles del Paquete</span>
+                    <div class="mb-4">
+                        <label for="peso" class="form-label small">Peso (kg)</label>
+                        <div class="input-group">
+                            <input type="number" id="peso" class="form-control form-control-lg" placeholder="0" min="0" step="0.1">
+                            <span class="input-group-text">kg</span>
+                        </div>
+                    </div>
+
+                    <ul class="list-group mb-3">
+                        <li class="list-group-item d-flex justify-content-between align-items-center" id="rate-row-1">
+                            <span>Estándar <small class="text-muted d-block fw-normal">< 10 kg</small></span>
+                            <span class="badge bg-secondary rounded-pill">Base</span>
+                        </li>
+                        <li class="list-group-item d-flex justify-content-between align-items-center" id="rate-row-2">
+                            <span>Plus <small class="text-muted d-block fw-normal">10 - 20 kg</small></span>
+                            <span class="badge bg-light text-dark border">x 1.5</span>
+                        </li>
+                        <li class="list-group-item d-flex justify-content-between align-items-center" id="rate-row-3">
+                            <span>Volumen <small class="text-muted d-block fw-normal">> 20 kg</small></span>
+                            <span class="badge bg-dark">x 2</span>
+                        </li>
+                    </ul>
+
+                    <div class="d-grid gap-2">
+                        <button id="btn-calcular" class="btn btn-dark py-2">Calcular Tarifa</button>
+                    </div>
+
+                    <div class="result-box price" id="result-box-price">
+                        <div class="price-label">Coste Total Estimado</div>
+                        <div class="price-value" id="final-price">0.00 €</div>
+                        <small id="rate-info" class="mt-2 d-block text-dark fw-bold">...</small>
+                        <small id="route-info" class="d-block text-muted" style="font-size: 0.8rem;">...</small>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-6">
+            <div class="corp-card">
+                <div class="card-header-corp">
+                    🆔 Validador de DNI
+                </div>
+
+                <div class="p-4">
+                    <div class="mb-4">
+                        <label for="dniInput" class="form-label fw-bold text-secondary">Documento de Identidad</label>
+                        <div class="input-group">
+                            <input type="text" id="dniInput" class="form-control form-control-lg" placeholder="12345678A" maxlength="9">
+                        </div>
+                        <small class="text-muted">Introduzca los 8 números y la letra.</small>
+                    </div>
+
+                    <div class="d-grid gap-2">
+                        <button id="btn-validar-dni" class="btn btn-outline-dark py-2">Verificar Validez</button>
+                    </div>
+
+                    <div id="dni-result-box" class="result-box mt-4">
+                        <h4 id="dni-result-icon" class="mb-1"></h4>
+                        <span id="dni-result-text" class="fw-bold"></span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+    </div>
+</div>
+
+<script>
+    document.addEventListener('DOMContentLoaded', () => {
+        // --- 1. CONFIGURACIÓN CALCULADORA ---
+        const inputsCalculadora = ['origen', 'destino', 'peso'];
+        inputsCalculadora.forEach(id => {
+            const el = document.getElementById(id);
+            // Calcular automáticamente cuando el usuario escribe o cambia algo
+            el.addEventListener('input', ejecutarCalculoEnvio); 
+        });
+        
+        document.getElementById('btn-calcular').addEventListener('click', ejecutarCalculoEnvio);
+
+
+        // --- 2. CONFIGURACIÓN DNI ---
+        const inputDNI = document.getElementById('dniInput');
+        const btnDNI = document.getElementById('btn-validar-dni');
+        
+        btnDNI.addEventListener('click', uiComprobarDNI);
+        inputDNI.addEventListener('keypress', (e) => { if(e.key === 'Enter') uiComprobarDNI() });
+    });
+
+
+    // ==========================================
+    // LÓGICA A: CALCULADORA DE ENVÍOS (Fusionada)
+    // ==========================================
+
+    function calcularPrecioBase(origen, destino) {
+        // Normalizamos a minúsculas para comparar bien
+        const o = origen.toLowerCase().trim();
+        const d = destino.toLowerCase().trim();
+
+        if (o === "" || d === "") return 0; // Si faltan datos, base 0
+
+        if (o === d) {
+            return 5; // Misma ciudad
+        } else if (o === "palma" || d === "palma") {
+            return 9; // Una es Palma (Isla)
+        } else {
+            return 7; // Península a Península
+        }
+    }
+
+    function ejecutarCalculoEnvio() {
+        // 1. Obtener valores
+        const origen = document.getElementById('origen').value;
+        const destino = document.getElementById('destino').value;
+        const peso = parseFloat(document.getElementById('peso').value);
+
+        // 2. Elementos visuales
+        const rows = [
+            document.getElementById('rate-row-1'),
+            document.getElementById('rate-row-2'),
+            document.getElementById('rate-row-3')
+        ];
+        const resultBox = document.getElementById('result-box-price');
+        const priceDisplay = document.getElementById('final-price');
+        const rateInfo = document.getElementById('rate-info');
+        const routeInfo = document.getElementById('route-info');
+
+        // Reset visual
+        rows.forEach(r => r.classList.remove('active-rate'));
+
+        // 3. Validaciones básicas
+        if (!origen || !destino || isNaN(peso) || peso <= 0) {
+            // Si faltan datos o peso incorrecto, ocultamos resultado o mostramos 0
+            resultBox.style.display = "none";
+            return;
+        }
+
+        // 4. Lógica de cálculo (Fusión de tus dos códigos)
+        const precioBase = calcularPrecioBase(origen, destino);
+        let precioFinal = 0;
+        let mensajeTarifa = "";
+
+        if (peso < 10) {
+            precioFinal = precioBase; 
+            rows[0].classList.add('active-rate');
+            mensajeTarifa = "Tarifa Estándar";
+        } 
+        else if (peso >= 10 && peso <= 20) {
+            precioFinal = precioBase * 1.5;
+            rows[1].classList.add('active-rate');
+            mensajeTarifa = "Tarifa Plus (x1.5)";
+        } 
+        else {
+            precioFinal = precioBase * 2;
+            rows[2].classList.add('active-rate');
+            mensajeTarifa = "Tarifa Gran Volumen (x2)";
+        }
+
+        // 5. Mostrar Resultados
+        priceDisplay.textContent = precioFinal.toFixed(2) + " €";
+        rateInfo.textContent = `${mensajeTarifa} (Base: ${precioBase}€)`;
+        routeInfo.textContent = `Ruta: ${origen} ➝ ${destino}`;
+        resultBox.style.display = "block";
+    }
+
+
+    // ==========================================
+    // LÓGICA B: VALIDADOR DE DNI
+    // ==========================================
+    
+    function validarDNI(dni) {
+        const letrasDNI = "TRWAGMYFPDXBNJZSQVHLCKE";
+        const regex = /^(\d{8})([A-Z])$/i;
+        const match = dni.toUpperCase().match(regex);
+
+        if (!match) return false;
+
+        const numero = parseInt(match[1], 10);
+        const letraIngresada = match[2];
+        const resto = numero % 23;
+        const letraCorrecta = letrasDNI.charAt(resto);
+
+        return letraIngresada === letraCorrecta;
+    }
+
+    function uiComprobarDNI() {
+        const dniInput = document.getElementById('dniInput');
+        const resultBox = document.getElementById('dni-result-box');
+        const icon = document.getElementById('dni-result-icon');
+        const text = document.getElementById('dni-result-text');
+        
+        const dni = dniInput.value.trim();
+
+        if (dni === "") {
+            resultBox.style.display = "none";
+            return;
+        }
+
+        const esValido = validarDNI(dni);
+
+        resultBox.style.display = "block";
+        resultBox.classList.remove('dni-valid', 'dni-invalid');
+
+        if (esValido) {
+            resultBox.classList.add('dni-valid');
+            icon.textContent = "✅ VÁLIDO";
+            text.textContent = `El DNI ${dni.toUpperCase()} es correcto.`;
+        } else {
+            resultBox.classList.add('dni-invalid');
+            icon.textContent = "❌ INVÁLIDO";
+            text.textContent = `El DNI ${dni.toUpperCase()} no es correcto.`;
+        }
+    }
+</script>
+
+</body>
+</html>
